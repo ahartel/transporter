@@ -1,0 +1,7 @@
+INCA_libs
+*.so
+*~
+coverage.vdb
+csrc
+simv.daidir
+*.log

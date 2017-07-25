@@ -1,0 +1,9 @@
+SRC = ../../../src
+SRCS = bm_sequencer.sv \
+	bm_driver.sv \
+	bm_agent.sv \
+	bm_scoreboard.sv \
+	bm_env.sv \
+	bm_test.sv \
+	bm_tb_top.sv \
+	$(SRC)/interfaces.sv
