@@ -1,8 +1,10 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class benchmark_transaction extends uvm_sequence_item;
-    parameter SIZE = 1;
+class benchmark_transaction #(parameter integer SIZE=1)
+    extends uvm_sequence_item;
+    `uvm_object_utils(benchmark_transaction);
+
     rand bit[7:0] data[SIZE];
     bit[31:0] timestamp;
 
@@ -13,39 +15,61 @@ class benchmark_transaction extends uvm_sequence_item;
     function logic equals(benchmark_transaction rhs);
 	logic ret = data == rhs.data;
 	return ret;
-    endfunction
+    endfunction // equals
 
-    // `uvm_object_utils_begin(benchmark_transaction)
+    function set_time(integer t);
+	timestamp = t;
+    endfunction // set_time
+    
+
+    //`uvm_object_utils_begin(benchmark_transaction)
     // 	`uvm_field_int_array(data, UVM_ALL_ON)
     // 	`uvm_field_int(timestamp, UVM_ALL_ON)
-    // `uvm_object_utils_end
+    //`uvm_object_utils_end
   
 endclass : benchmark_transaction
 
-// class timed_release_sequence extends uvm_sequence#(timed_release_transaction);
-//     `uvm_object_utils(timed_release_sequence)
-//     integer num_samples;
+class benchmark_sequence #(parameter integer SIZE=1)
+    extends uvm_sequence#(benchmark_transaction#(.SIZE(SIZE)));
+    `uvm_object_utils(benchmark_sequence)
+
+    integer timestamps[$];
     
-//     function new(string name = "");
-// 	super.new(name);
-// 	num_samples = 150;
-//     endfunction // new
+    function new(string name = "");
+	super.new(name);
+	timestamps = {};
+    endfunction // new
 
-//     task body();
-// 	timed_release_transaction tr_tx;
-// 	`uvm_info("body", $psprintf("Generating %0d samples.", num_samples), UVM_LOW);
-// 	repeat(num_samples) begin
-// 	    tr_tx = timed_release_transaction::type_id::create(.name("tr_tx"),
-// 							       .contxt(get_full_name()));
+    function set_times(integer times[$]);
 
-// 	    start_item(tr_tx);
-// 	    assert(tr_tx.randomize());
-// 	    //`uvm_info("tr_sequence", tr_tx.sprint(), UVM_LOW);
-// 	    finish_item(tr_tx);
-// 	end
-//     endtask // body
+	timestamps = times;
+    endfunction
 
-// endclass : timed_release_sequence
+    task body();
+	benchmark_transaction#(SIZE) bm_tx;
+	`uvm_info("body", $psprintf("Generating %0d samples.", timestamps.size()),
+		  UVM_LOW);
+	foreach (timestamps[i]) begin
+	    bm_tx = benchmark_transaction#(SIZE)::type_id::create(.name("bm_tx"),
+	 							  .contxt(get_full_name()));
+    
+	    start_item(bm_tx);
+	    assert(bm_tx.randomize());
+	    bm_tx.set_time(timestamps[i]);
+	    `uvm_info("bm_sequence", bm_tx.sprint(), UVM_LOW);
+	    finish_item(bm_tx);
+	end
+    endtask // body
 
+endclass : benchmark_sequence
 
-// typedef uvm_sequencer#(timed_release_transaction) timed_release_sequencer;
+class benchmark_sequencer #(parameter integer SIZE=1)
+    extends uvm_sequencer#(benchmark_transaction#(.SIZE(SIZE)));
+    `uvm_object_utils(benchmark_sequencer)
+
+    function new(string name = "");
+	super.new(name);
+
+    endfunction // new
+endclass // benchmark_sequencer
+

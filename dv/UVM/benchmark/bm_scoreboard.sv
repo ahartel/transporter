@@ -1,7 +1,8 @@
 `uvm_analysis_imp_decl(_before)
 `uvm_analysis_imp_decl(_after)
 
-class benchmark_scoreboard extends uvm_scoreboard;
+class benchmark_scoreboard #(parameter integer SIZE=1)
+    extends uvm_scoreboard;
     `uvm_component_utils(benchmark_scoreboard)
 
     uvm_analysis_export #(benchmark_transaction) sb_export_before;
@@ -10,14 +11,16 @@ class benchmark_scoreboard extends uvm_scoreboard;
     uvm_tlm_analysis_fifo #(benchmark_transaction) before_fifo;
     uvm_tlm_analysis_fifo #(benchmark_transaction) after_fifo;
 
-    benchmark_transaction transaction_before;
-    benchmark_transaction transaction_after;
+    benchmark_transaction#(SIZE) transaction_before;
+    benchmark_transaction#(SIZE) transaction_after;
 
     function new(string name, uvm_component parent);
 	super.new(name, parent);
 
-	transaction_before = new("transaction_before");
-	transaction_after = new("transaction_after");
+	transaction_before = benchmark_transaction#(SIZE)::type_id::create(.name("transaction_before"),
+									   .contxt(get_full_name()));
+	transaction_after = benchmark_transaction#(SIZE)::type_id::create(.name("transaction_after"),
+									  .contxt(get_full_name()));
     endfunction: new
 
     function void build_phase(uvm_phase phase);
@@ -46,9 +49,9 @@ class benchmark_scoreboard extends uvm_scoreboard;
 
     virtual function void compare();
 	if(transaction_before.compare(transaction_after)) begin
-	    `uvm_info("compare", {"Test: OK!"}, UVM_LOW);
+	   `uvm_info("compare", {"Test: OK!"}, UVM_LOW);
 	end else begin
-	    `uvm_info("compare", {"Test: Fail!"}, UVM_LOW);
+	   `uvm_info("compare", {"Test: Fail!"}, UVM_LOW);
 	end
     endfunction: compare
 endclass: benchmark_scoreboard

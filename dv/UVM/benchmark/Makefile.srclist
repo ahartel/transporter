@@ -1,5 +1,6 @@
 SRC = ../../../src
 SRCS = bm_sequencer.sv \
+	bm_monitor.sv \
 	bm_driver.sv \
 	bm_agent.sv \
 	bm_scoreboard.sv \

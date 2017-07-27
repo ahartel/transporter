@@ -3,6 +3,19 @@ interface sys_if();
     logic[31:0] systime;
 endinterface // sys_if
 
+module id (Byte_if.arbiter asic,
+	   Byte_if.client fpga);
+
+    assign fpga.tx_data = asic.tx_data;
+    assign fpga.tx_req = asic.tx_req;
+    assign fpga.rx_acc = asic.rx_acc;
+    
+    assign asic.tx_acc = fpga.tx_acc;
+    assign asic.rx_data = fpga.rx_data;
+    assign asic.rx_req = fpga.rx_req;
+    
+endmodule
+
 module benchmark_tb_top;
     import uvm_pkg::*;
 
@@ -13,14 +26,13 @@ module benchmark_tb_top;
     Byte_if bif_fpga[NUM_CLIENTS]();
 
     // DUT
-    // Timed_release dut(sif.clk,
-    // 		      sif.reset,
-    // 		      sif.systime,
-    // 		      tif,
-    // 		      pif);
+    id pseudo_dut [NUM_CLIENTS] (bif_asic, bif_fpga);
 
     generate
     	for (genvar i=0; i<NUM_CLIENTS; i++) begin
+	    assign bif_fpga[i].tx_acc = 1'b1;
+	    assign bif_asic[i].rx_acc = 1'b1;
+	    
     	    initial uvm_resource_db#(virtual Byte_if)::set("ifs",
 							   $psprintf("bif_asic_%0d", i),
     							   bif_asic[i]);
@@ -49,6 +61,12 @@ module benchmark_tb_top;
     initial begin
 	sif.clk <= 1'b1;
 	sif.systime <= 0;
+	// for (integer i=0; i<NUM_CLIENTS; i++) begin
+	//     bif_asic[i].tx_acc = 1'b1;
+	//     bif_asic[i].rx_acc = 1'b1;
+	//     bif_fpga[i].tx_acc = 1'b1;
+	//     bif_fpga[i].rx_acc = 1'b1;
+	// end
     end
 
     // Clock generation
